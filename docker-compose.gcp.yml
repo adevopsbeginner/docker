@@ -1,0 +1,40 @@
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy:alpine
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/vhost.d:/etc/nginx/vhost.d
+      - ./nginx/html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    restart: unless-stopped
+    environment:
+      - DEFAULT_EMAIL=adevopsbeginner@gmail.com
+      - NGINX_PROXY_CONTAINER=nginx-proxy
+    volumes:
+      - ./nginx/certs:/etc/nginx/certs
+      - ./nginx/vhost.d:/etc/nginx/vhost.d
+      - ./nginx/html:/usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - nginx-proxy
+
+  adevopsbeginner:
+    image: adevopsbeginner/adevopsbeginner:0.1.3
+    container_name: adevopsbeginner
+    restart: unless-stopped
+    expose:
+      - 80
+    environment:
+      - TZ=Australia/Melbourne
+      - VIRTUAL_HOST=gcp.adevopsbeginner.site
+      - LETSENCRYPT_HOST=gcp.adevopsbeginner.site
+      - LETSENCRYPT_EMAIL=adevopsbeginner@gmail.com
